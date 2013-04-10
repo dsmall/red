@@ -3,7 +3,7 @@
 // saveMsg editorGetText savePreferences initPreferences defaultPreferences
 
 // Set up globals
-var ROOT = '/var/www/public/';
+var ROOT = '/var/drafts/rascalmicro.com/';
 var IMAGE_EXTENSIONS = [ 'png', 'jpg', 'jpeg', 'gif', 'ico' ];
 var EXCEPTIONS = ['/var/www/public/server.py',
         '/var/www/public/static/', '/var/www/public/templates/'];
@@ -856,21 +856,18 @@ $('#delete-cancel').click(function () {
     $('#modal-d').modal('hide');
 });
 
-// Reload pytronics
-// Assumes there is a folder static/log/ and
-// a symlink static/log/public.log to /var/log/uwsgi/public.log
-function doReload() {
+function doBuild() {
     "use strict";
     var savedPath = $('#path').val(),
         savedText = (savedPath === '') ? editorGetText() : undefined,
         savedCursor = editor.getCursor(),
         savedScroll = editor.getScrollInfo();
     $('#reload-bar').css('width', '0%');
-    $.post('/editor/reload', function (response) {
+    $.post('/editor/build', function (response) {
         trackChanges(false);
         clearLocation();
         hidePicture();
-        editorSetText('Pytronics is reloading. Please wait...');
+        editorSetText('Building site. Please wait...');
         // Wait 15 sec
         $('#reload-progress')
             .addClass('progress-striped')
@@ -881,31 +878,31 @@ function doReload() {
                 .removeClass('progress-striped');
             // Check if succeeded, if not show log
             $.post('/datetime', function (response) {
-                saveMsg('Reloaded pytronics');
+                saveMsg('Built site');
                 if (savedPath !== '') {
                     loadFile(savedPath, savedScroll, savedCursor);
                 } else {
                     editorSetText(savedText);
                 }
             }).error(function (jqXHR, textStatus, errorThrown) {
-                saveMsg('Reload pytronics failed - see log');
-                loadFile(ROOT + 'static/log/public.log');
+                saveMsg('Build failed - see log');
+                loadFile(ROOT + 'public.log');
             });
         });
     }).error(function (jqXHR, textStatus, errorThrown) {
-        console.log('reload: ' + textStatus + ': ' + errorThrown);
-        saveMsg('Reload pytronics failed');
+        console.log('build: ' + textStatus + ': ' + errorThrown);
+        saveMsg('Site build failed');
     });
 }
 
-$('#reload').click(function () {
+$('#build').click(function () {
     "use strict";
     if (!bFileChanged) {
-        doReload();
+        doBuild();
     } else {
         querySave.init(SAVE, function (status) {
             if (status === 1) {
-                doReload();
+                doBuild();
             }
         });
     }

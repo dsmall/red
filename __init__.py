@@ -5,7 +5,7 @@ from flask.ext.login import (LoginManager, current_user, login_required,
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
 
-ROOT = '/var/www/public/'
+ROOT = '/var/drafts/rascalmicro.com/'
 CONFIG_FILE = '/var/www/red/static/editor.conf'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', 'ico', 'html', 'css', 'js', 'py', 'c'])
 
@@ -377,18 +377,15 @@ def xupload_file():
             return 'Bad request', 400
     return 'OK', 200
 
-# Reload pytronics button
-@editor.route('/editor/reload', methods=['POST'])
+# Build site button
+@editor.route('/editor/build', methods=['POST'])
 @login_required
-def reload():
-    import subprocess
-    res = subprocess.call(['logrotate', '-f', '/var/www/rotate_public.conf'])
-    if res <> 0:
-        return 'Bad request', 400
-    else:
-        res = subprocess.call(['touch', '/etc/uwsgi/public.ini'])
-        if res <> 0:
-            return 'Bad request', 400
+def build():
+    import os, sh
+    os.chdir(ROOT)
+    os.setuid(33)
+    run = sh.Command("/usr/local/bin/blogofile")
+    run('build', _err="error.txt")
     return 'OK', 200
 
 # Save prefs in editor.config
